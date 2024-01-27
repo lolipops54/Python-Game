@@ -1,14 +1,14 @@
 import pygame
 
-clock = pygame.time.Clock()
-
+# Initialization
 pygame.init()
 screen = pygame.display.set_mode((1280, 748))
 pygame.display.set_caption('In Search of Blood')
-icon = pygame.image.load('images/icon.png').convert_alpha()
-pygame.display.set_icon(icon)
+pygame.display.set_icon(pygame.image.load('images/icon.png').convert_alpha())
+clock = pygame.time.Clock()
 
-bg = pygame.image.load('images/bg3.png').convert_alpha()
+
+# Animations
 walk_right = [
     pygame.image.load('images/ghost/walk/right/1.png').convert_alpha(),
     pygame.image.load('images/ghost/walk/right/1 — копия.png').convert_alpha(),
@@ -27,7 +27,6 @@ walk_right = [
     pygame.image.load('images/ghost/walk/right/8.png').convert_alpha(),
     pygame.image.load('images/ghost/walk/right/8 — копия.png').convert_alpha()
 ]
-
 walk_left = [
     pygame.image.load('images/ghost/walk/left/1.png').convert_alpha(),
     pygame.image.load('images/ghost/walk/left/1 — копия.png').convert_alpha(),
@@ -46,32 +45,6 @@ walk_left = [
     pygame.image.load('images/ghost/walk/left/8.png').convert_alpha(),
     pygame.image.load('images/ghost/walk/left/8 — копия.png').convert_alpha()
 ]
-
-ghost_step = 0
-bg_x = 0
-
-ghost_speed = 20
-ghost_x = 150
-ghost_y = 540
-
-is_jump = False
-jump_count = 8
-
-bg_sound = pygame.mixer.Sound('sounds/bg.mp3')
-bg_sound.play(-1)
-
-enemy = pygame.image.load('images/enemy.png').convert_alpha()
-
-enemy_timer = pygame.USEREVENT + 1
-pygame.time.set_timer(enemy_timer, 4500)
-
-enemy_list = []
-
-label = pygame.font.Font('fonts/RubikBurned-Regular.ttf', 80)
-lose_label = label.render('Bro, you lose...', False, 'White')
-restart_label = label.render('Click HERE to restart', False, (102, 157, 175))
-restart_label_hitbox = restart_label.get_rect(topleft = (185, 400))
-
 knifes_anim = [
     pygame.image.load('images/knife/knife1.png').convert_alpha(),
     pygame.image.load('images/knife/knife1 — копия.png').convert_alpha(),
@@ -82,10 +55,11 @@ knifes_anim = [
     pygame.image.load('images/knife/knife4.png').convert_alpha(),
     pygame.image.load('images/knife/knife4 — копия.png').convert_alpha(),
 ]
-knifes = []
 
-knifes_step = 0
-knifes_left = 3
+
+# Images
+bg = pygame.image.load('images/bg3.png').convert_alpha()
+enemy = pygame.image.load('images/enemy.png').convert_alpha()
 
 knife_bar_full = pygame.image.load('images/knife_bar/knife_bar_full.png').convert_alpha()
 knife_bar_medium = pygame.image.load('images/knife_bar/knife_bar_medium.png').convert_alpha()
@@ -96,35 +70,88 @@ hp_full = pygame.image.load('images/hp/hp_full.png').convert_alpha()
 hp_medium = pygame.image.load('images/hp/hp_medium.png').convert_alpha()
 hp_low = pygame.image.load('images/hp/hp_low.png').convert_alpha()
 
-health_points = 3
-
 heal_potion = pygame.image.load('images/potions/medical.png').convert_alpha()
 heal_potion_empty = pygame.image.load('images/potions/medical_empty.png').convert_alpha()
 
+
+# Variables
+ghost_step = 0
+ghost_speed = 20
+ghost_x = 150
+ghost_y = 540
+
+knifes_step = 0
+knifes_left = 3
+
+jump_count = 8
+health_points = 3
+bg_x = 0
+
+
+# Arrays
+enemy_list = []
+knifes = []
+
+
+# Flags
+is_jump = False
 potion_flag = False
 is_potion = False
-
 gameplay = True
-
 running = True
+
+
+# Sound
+bg_sound = pygame.mixer.Sound('sounds/bg.mp3')
+bg_sound.play(-1)
+
+
+# Enemy Timer
+enemy_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(enemy_timer, 4500)
+
+
+# Restart Window
+label = pygame.font.Font('fonts/RubikBurned-Regular.ttf', 80)
+lose_label = label.render('Bro, you lose...', False, 'White')
+restart_label = label.render('Click HERE to restart', False, (102, 157, 175))
+restart_label_hitbox = restart_label.get_rect(topleft = (185, 400))
+
+
 while running:
 
+    # Screen Emersion
     screen.blit(bg, (bg_x, 0))
     screen.blit(bg, (bg_x + 1280, 0))
 
     if gameplay:
 
-        if health_points == 3:
-            screen.blit(hp_full, (20, 700))
-
-        if knifes_left == 3:
-            screen.blit(knife_bar_full, (365, 700))
-
-        if is_potion == False:
-            screen.blit(heal_potion_empty, (485, 680))
-
+        # Ghost Hitbox
         ghost_hitbox = walk_left[0].get_rect(topleft = (ghost_x, ghost_y))
 
+        # Health_Point Bar
+        if health_points == 3:
+            screen.blit(hp_full, (20, 700))
+        if health_points == 2:
+            screen.blit(hp_medium, (20, 700))
+        if health_points == 1:
+            screen.blit(hp_low, (20, 700))
+        if health_points == 0:
+            gameplay = False
+
+
+        # Knifes Bar
+        if knifes_left == 3:
+            screen.blit(knife_bar_full, (365, 700))
+        if knifes_left == 2:
+            screen.blit(knife_bar_medium, (365, 700))
+        if knifes_left == 1:
+            screen.blit(knife_bar_low, (365, 700))
+        if knifes_left == 0:
+            screen.blit(knife_bar_zero, (365, 700))
+
+
+        # Enemy Emersion
         if enemy_list:
             for i, el in enumerate(enemy_list):
                 screen.blit(enemy, el)
@@ -137,36 +164,85 @@ while running:
                     health_points -= 1
                     enemy_list.pop(i)
 
-        if health_points == 2:
-            screen.blit(hp_medium, (20, 700))
 
-        if health_points == 1:
-            screen.blit(hp_low, (20, 700))
+        # Steps
+        if ghost_step == 15:
+            ghost_step = 0
+        else:
+            ghost_step += 1
 
-        if health_points == 0:
-            gameplay = False
+        if knifes_step == 7:
+            knifes_step = 0
+        else:
+            knifes_step += 1
 
-        if knifes_left == 2:
-            screen.blit(knife_bar_medium, (365, 700))
 
-        if knifes_left == 1:
-            screen.blit(knife_bar_low, (365, 700))
+        # Background Movement
+        bg_x -= 2
+        if bg_x == -1280:
+            bg_x = 0
 
-        if knifes_left == 0:
-            screen.blit(knife_bar_zero, (365, 700))
 
+        # Knife and enemy collision
+        if knifes:
+            for i, el in enumerate(knifes):
+                screen.blit(knifes_anim[knifes_step], (el.x, el.y))
+                el.x += 25
+
+            if el.x > 1300:
+                knifes.pop(i)
+
+            if enemy_list:
+                for index, enemy_el in enumerate(enemy_list):
+                    if el.colliderect(enemy_el):
+                        enemy_list.pop(index)
+                        knifes.pop(i)
+
+                        # Potion Drop
+                        potion_flag = True
+                        potion_x = el.x
+                        potion_y = el.y
+
+
+        # Potion Emersion
+        if potion_flag:
+            screen.blit(heal_potion, (potion_x + 5, potion_y + 3))
+            heal_potion_hitbox = heal_potion.get_rect(topleft = (potion_x + 5, potion_y + 3))
+            if heal_potion_hitbox.colliderect(ghost_hitbox):
+                is_potion = True
+                heal_potion_hitbox = heal_potion.get_rect(topleft=(-50, -50))
+                potion_x -= 1500
+                potion_y -= 1500
+
+
+        # Potion Bar
+        if is_potion:
+            screen.blit(heal_potion, (485, 680))
+        else:
+            screen.blit(heal_potion_empty, (485, 680))
+
+
+        # Keys
         keys = pygame.key.get_pressed()
 
+        # Run Left
         if keys[pygame.K_a]:
             screen.blit(walk_left[ghost_step], (ghost_x, ghost_y))
         else:
             screen.blit(walk_right[ghost_step], (ghost_x, ghost_y))
 
+        # Run Right
         if keys[pygame.K_d] and ghost_x < 1200:
             ghost_x += ghost_speed
         elif keys[pygame.K_a] and ghost_x > 10:
             ghost_x -= ghost_speed
 
+        # Use Heal Potion
+        if keys[pygame.K_e] and is_potion and 0 < health_points < 3:
+            health_points += 1
+            is_potion = False
+
+        # Jump
         if not is_jump:
             if keys[pygame.K_w]:
                 is_jump = True
@@ -181,76 +257,41 @@ while running:
                 is_jump = False
                 jump_count = 8
 
-        if ghost_step == 15:
-            ghost_step = 0
-        else:
-            ghost_step += 1
-
-        if knifes_step == 7:
-            knifes_step = 0
-        else:
-            knifes_step += 1
-
-        bg_x -= 2
-        if bg_x == -1280:
-            bg_x = 0
-
-        if knifes:
-            for i, el in enumerate(knifes):
-                screen.blit(knifes_anim[knifes_step], (el.x, el.y))
-                el.x += 25
-
-            if el.x > 1300:
-                knifes.pop(i)
-
-            if enemy_list:
-                for index, enemy_el in enumerate(enemy_list):
-                    if el.colliderect(enemy_el):
-                        enemy_list.pop(index)
-                        knifes.pop(i)
-                        potion_flag = True
-                        potion_x = el.x
-                        potion_y = el.y
-
-        if potion_flag:
-            screen.blit(heal_potion, (potion_x + 5, potion_y + 3))
-            heal_potion_hitbox = heal_potion.get_rect(topleft = (potion_x + 5, potion_y + 3))
-            if heal_potion_hitbox.colliderect(ghost_hitbox):
-                is_potion = True
-                heal_potion_hitbox = heal_potion.get_rect(topleft=(-50, -50))
-                potion_x -= 1500
-                potion_y -= 1500
-
-        if is_potion:
-            screen.blit(heal_potion, (485, 680))
-
-        if keys[pygame.K_e] and is_potion and 0 < health_points < 3:
-            health_points += 1
-            is_potion = False
 
     else:
+
+        # Restart Window
         bg_sound.stop()
         screen.fill((87, 88, 89))
         screen.blit(lose_label, (370, 300))
         screen.blit(restart_label, restart_label_hitbox)
 
+        # Restart Button Click
         mouse = pygame.mouse.get_pos()
         if restart_label_hitbox.collidepoint(mouse) and pygame.mouse.get_pressed()[0]:
-            gameplay = True
             bg_sound.play(-1)
+
             ghost_x = 150
-            enemy_list.clear()
-            knifes.clear()
             knifes_left = 3
             bg_x = 0
             health_points = 3
+
+            enemy_list.clear()
+            knifes.clear()
+
             screen.blit(hp_full, (20, 700))
             screen.blit(knife_bar_full, (365, 700))
             screen.blit(heal_potion_empty, (485, 680))
+
+            gameplay = True
             is_potion = False
 
+
+    # Display Update
     pygame.display.update()
 
+
+    # Event Scan
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -261,4 +302,6 @@ while running:
             knifes.append(knifes_anim[0].get_rect(topleft = (ghost_x + 30, ghost_y + 10)))
             knifes_left -= 1
 
+
+    # Delay
     clock.tick(20)
