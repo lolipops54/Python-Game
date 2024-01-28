@@ -55,6 +55,14 @@ knifes_anim = [
     pygame.image.load('images/knife/knife4.png').convert_alpha(),
     pygame.image.load('images/knife/knife4 — копия.png').convert_alpha(),
 ]
+eye_fly = [
+    pygame.image.load('images/eye/eye1.png').convert_alpha(),
+    pygame.image.load('images/eye/eye1 — копия.png').convert_alpha(),
+    pygame.image.load('images/eye/eye1 — копия (2).png').convert_alpha(),
+    pygame.image.load('images/eye/eye2.png').convert_alpha(),
+    pygame.image.load('images/eye/eye2 — копия.png').convert_alpha(),
+    pygame.image.load('images/eye/eye2 — копия (2).png').convert_alpha()
+]
 
 
 # Images
@@ -73,6 +81,12 @@ hp_low = pygame.image.load('images/hp/hp_low.png').convert_alpha()
 heal_potion = pygame.image.load('images/potions/medical.png').convert_alpha()
 heal_potion_empty = pygame.image.load('images/potions/medical_empty.png').convert_alpha()
 
+shield_bar_full = pygame.image.load('images/shield/shield_full.png').convert_alpha()
+shield_bar_good = pygame.image.load('images/shield/shield_good.png').convert_alpha()
+shield_bar_medium = pygame.image.load('images/shield/shield_medium.png').convert_alpha()
+shield_bar_low = pygame.image.load('images/shield/shield_low.png').convert_alpha()
+shield_bar_zero = pygame.image.load('images/shield/shield_zero.png').convert_alpha()
+
 
 # Variables
 ghost_step = 0
@@ -84,12 +98,18 @@ knifes_step = 0
 knifes_left = 3
 
 jump_count = 8
-health_points = 3
+health_points = 7
 bg_x = 0
+
+potion_x = -100
+potion_y = -100
+
+eye_step = 0
 
 
 # Arrays
 enemy_list = []
+eye_list = []
 knifes = []
 
 
@@ -110,6 +130,9 @@ bg_sound.play(-1)
 enemy_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(enemy_timer, 4500)
 
+eye_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(eye_timer, 3000)
+
 
 # Restart Window
 label = pygame.font.Font('fonts/RubikBurned-Regular.ttf', 80)
@@ -124,19 +147,38 @@ while running:
     screen.blit(bg, (bg_x, 0))
     screen.blit(bg, (bg_x + 1280, 0))
 
+
     if gameplay:
 
         # Ghost Hitbox
         ghost_hitbox = walk_left[0].get_rect(topleft = (ghost_x, ghost_y))
 
+
+        # Shield Bar
+        if health_points == 7:
+            screen.blit(shield_bar_full, (18, 650))
+            screen.blit(hp_full, (20, 700))
+        if health_points == 6:
+            screen.blit(shield_bar_good, (18, 650))
+            screen.blit(hp_full, (20, 700))
+        if health_points == 5:
+            screen.blit(shield_bar_medium, (18, 650))
+            screen.blit(hp_full, (20, 700))
+        if health_points == 4:
+            screen.blit(shield_bar_low, (18, 650))
+            screen.blit(hp_full, (20, 700))
+
         # Health_Point Bar
         if health_points == 3:
             screen.blit(hp_full, (20, 700))
+            screen.blit(shield_bar_zero, (18, 650))
         if health_points == 2:
             screen.blit(hp_medium, (20, 700))
+            screen.blit(shield_bar_zero, (18, 650))
         if health_points == 1:
             screen.blit(hp_low, (20, 700))
-        if health_points == 0:
+            screen.blit(shield_bar_zero, (18, 650))
+        if health_points <= 0:
             gameplay = False
 
 
@@ -164,6 +206,18 @@ while running:
                     health_points -= 1
                     enemy_list.pop(i)
 
+        if eye_list:
+            for j, elem in enumerate(eye_list):
+                screen.blit(eye_fly[eye_step], elem)
+                elem.x -= 22
+
+                if elem.x < -10:
+                    eye_list.pop(j)
+
+                if ghost_hitbox.colliderect(elem):
+                    health_points -= 2
+                    eye_list.pop(j)
+
 
         # Steps
         if ghost_step == 15:
@@ -175,6 +229,11 @@ while running:
             knifes_step = 0
         else:
             knifes_step += 1
+
+        if eye_step == 5:
+            eye_step = 0
+        else:
+            eye_step += 1
 
 
         # Background Movement
@@ -196,6 +255,12 @@ while running:
                 for index, enemy_el in enumerate(enemy_list):
                     if el.colliderect(enemy_el):
                         enemy_list.pop(index)
+                        knifes.pop(i)
+
+            if eye_list:
+                for index, eye_el in enumerate(eye_list):
+                    if el.colliderect(eye_el):
+                        eye_list.pop(index)
                         knifes.pop(i)
 
                         # Potion Drop
@@ -274,14 +339,19 @@ while running:
             ghost_x = 150
             knifes_left = 3
             bg_x = 0
-            health_points = 3
+            health_points = 7
+            potion_x -= 1500
+            potion_y -= 1500
 
             enemy_list.clear()
+            eye_list.clear()
             knifes.clear()
 
+            screen.blit(shield_bar_full, (18, 650))
             screen.blit(hp_full, (20, 700))
             screen.blit(knife_bar_full, (365, 700))
             screen.blit(heal_potion_empty, (485, 680))
+            heal_potion_hitbox = heal_potion.get_rect(topleft=(-50, -50))
 
             gameplay = True
             is_potion = False
@@ -293,11 +363,16 @@ while running:
 
     # Event Scan
     for event in pygame.event.get():
+
         if event.type == pygame.QUIT:
             running = False
             pygame.quit()
+
         if event.type == enemy_timer:
             enemy_list.append(enemy.get_rect(topleft = (1290, 540)))
+        if event.type == eye_timer:
+            eye_list.append(eye_fly[0].get_rect(topleft = (1310, 440)))
+
         if gameplay and event.type == pygame.KEYUP and event.key == pygame.K_SPACE and knifes_left > 0:
             knifes.append(knifes_anim[0].get_rect(topleft = (ghost_x + 30, ghost_y + 10)))
             knifes_left -= 1
