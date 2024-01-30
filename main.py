@@ -2,10 +2,15 @@ import pygame
 
 # Initialization
 pygame.init()
-screen = pygame.display.set_mode((1280, 748))
+
+window_x = 1280
+window_y = 748
+
+screen = pygame.display.set_mode((window_x, window_y))
 pygame.display.set_caption('In Search of Blood')
-pygame.display.set_icon(pygame.image.load('images/icon.png').convert_alpha())
+pygame.display.set_icon(pygame.image.load('images/icons/icon.png').convert_alpha())
 clock = pygame.time.Clock()
+surface = pygame.Surface((window_x, window_y), pygame.SRCALPHA)
 
 
 # Animations
@@ -66,8 +71,10 @@ eye_fly = [
 
 
 # Images
-bg = pygame.image.load('images/bg3.png').convert_alpha()
-enemy = pygame.image.load('images/enemy.png').convert_alpha()
+bg1 = pygame.image.load('images/bg/bg1.JPG').convert_alpha()
+bg2 = pygame.image.load('images/bg/bg2.JPG').convert_alpha()
+enemy = pygame.image.load('images/enemy/enemy.png').convert_alpha()
+ghost_stand = pygame.image.load('images/ghost/ghost_stand.png').convert_alpha()
 
 knife_bar_full = pygame.image.load('images/knife_bar/knife_bar_full.png').convert_alpha()
 knife_bar_medium = pygame.image.load('images/knife_bar/knife_bar_medium.png').convert_alpha()
@@ -107,10 +114,15 @@ potion_y = -100
 eye_step = 0
 
 
-# Arrays
+# Arrays and Tuples
 enemy_list = []
 eye_list = []
 knifes = []
+
+shield_bar_xy = [window_x - 329, 20]
+hp_bar_xy = [window_x - 326, 70]
+knifes_bar_xy = [window_x - 317, 120]
+heal_potion_bar_xy = [window_x - 194, 105]
 
 
 # Flags
@@ -119,6 +131,7 @@ potion_flag = False
 is_potion = False
 gameplay = True
 running = True
+paused = False
 
 
 # Sound
@@ -130,9 +143,6 @@ bg_sound.play(-1)
 enemy_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(enemy_timer, 4500)
 
-eye_timer = pygame.USEREVENT + 1
-pygame.time.set_timer(eye_timer, 3000)
-
 
 # Restart Window
 label = pygame.font.Font('fonts/RubikBurned-Regular.ttf', 80)
@@ -142,10 +152,11 @@ restart_label_hitbox = restart_label.get_rect(topleft = (185, 400))
 
 
 while running:
+    mouse = (-100, -100)
 
     # Screen Emersion
-    screen.blit(bg, (bg_x, 0))
-    screen.blit(bg, (bg_x + 1280, 0))
+    screen.blit(bg1, (bg_x, 0))
+    screen.blit(bg2, (bg_x + window_x, 0))
 
 
     if gameplay:
@@ -154,50 +165,12 @@ while running:
         ghost_hitbox = walk_left[0].get_rect(topleft = (ghost_x, ghost_y))
 
 
-        # Shield Bar
-        if health_points == 7:
-            screen.blit(shield_bar_full, (18, 650))
-            screen.blit(hp_full, (20, 700))
-        if health_points == 6:
-            screen.blit(shield_bar_good, (18, 650))
-            screen.blit(hp_full, (20, 700))
-        if health_points == 5:
-            screen.blit(shield_bar_medium, (18, 650))
-            screen.blit(hp_full, (20, 700))
-        if health_points == 4:
-            screen.blit(shield_bar_low, (18, 650))
-            screen.blit(hp_full, (20, 700))
-
-        # Health_Point Bar
-        if health_points == 3:
-            screen.blit(hp_full, (20, 700))
-            screen.blit(shield_bar_zero, (18, 650))
-        if health_points == 2:
-            screen.blit(hp_medium, (20, 700))
-            screen.blit(shield_bar_zero, (18, 650))
-        if health_points == 1:
-            screen.blit(hp_low, (20, 700))
-            screen.blit(shield_bar_zero, (18, 650))
-        if health_points <= 0:
-            gameplay = False
-
-
-        # Knifes Bar
-        if knifes_left == 3:
-            screen.blit(knife_bar_full, (365, 700))
-        if knifes_left == 2:
-            screen.blit(knife_bar_medium, (365, 700))
-        if knifes_left == 1:
-            screen.blit(knife_bar_low, (365, 700))
-        if knifes_left == 0:
-            screen.blit(knife_bar_zero, (365, 700))
-
-
         # Enemy Emersion
         if enemy_list:
             for i, el in enumerate(enemy_list):
                 screen.blit(enemy, el)
-                el.x -= 15
+                if not paused:
+                    el.x -= 15
 
                 if el.x < -10:
                     enemy_list.pop(i)
@@ -208,8 +181,11 @@ while running:
 
         if eye_list:
             for j, elem in enumerate(eye_list):
-                screen.blit(eye_fly[eye_step], elem)
-                elem.x -= 22
+                if not paused:
+                    screen.blit(eye_fly[eye_step], elem)
+                    elem.x -= 22
+                else:
+                    screen.blit(eye_fly[0], elem)
 
                 if elem.x < -10:
                     eye_list.pop(j)
@@ -237,18 +213,20 @@ while running:
 
 
         # Background Movement
-        bg_x -= 2
-        if bg_x == -1280:
-            bg_x = 0
+        if not paused:
+            bg_x -= 2
+            if bg_x == -window_x:
+                bg_x = 0
 
 
         # Knife and enemy collision
         if knifes:
             for i, el in enumerate(knifes):
                 screen.blit(knifes_anim[knifes_step], (el.x, el.y))
-                el.x += 25
+                if not paused:
+                    el.x += 25
 
-            if el.x > 1300:
+            if el.x > window_x + 20:
                 knifes.pop(i)
 
             if enemy_list:
@@ -276,51 +254,98 @@ while running:
             if heal_potion_hitbox.colliderect(ghost_hitbox):
                 is_potion = True
                 heal_potion_hitbox = heal_potion.get_rect(topleft=(-50, -50))
-                potion_x -= 1500
-                potion_y -= 1500
-
-
-        # Potion Bar
-        if is_potion:
-            screen.blit(heal_potion, (485, 680))
-        else:
-            screen.blit(heal_potion_empty, (485, 680))
+                potion_x -= (window_x + 300)
+                potion_y -= (window_x + 300)
 
 
         # Keys
         keys = pygame.key.get_pressed()
 
         # Run Left
-        if keys[pygame.K_a]:
-            screen.blit(walk_left[ghost_step], (ghost_x, ghost_y))
+        if not paused:
+            if keys[pygame.K_a]:
+                screen.blit(walk_left[ghost_step], (ghost_x, ghost_y))
+            else:
+                screen.blit(walk_right[ghost_step], (ghost_x, ghost_y))
         else:
-            screen.blit(walk_right[ghost_step], (ghost_x, ghost_y))
+            screen.blit(ghost_stand, (ghost_x, ghost_y))
 
         # Run Right
-        if keys[pygame.K_d] and ghost_x < 1200:
+        if keys[pygame.K_d] and ghost_x < (window_x - 80) and not paused:
             ghost_x += ghost_speed
-        elif keys[pygame.K_a] and ghost_x > 10:
+        elif keys[pygame.K_a] and ghost_x > 10 and not paused:
             ghost_x -= ghost_speed
 
         # Use Heal Potion
-        if keys[pygame.K_e] and is_potion and 0 < health_points < 3:
+        if keys[pygame.K_e] and is_potion and 0 < health_points < 3 and not paused:
             health_points += 1
             is_potion = False
 
         # Jump
-        if not is_jump:
-            if keys[pygame.K_w]:
-                is_jump = True
-        else:
-            if jump_count >= -8:
-                if jump_count > 0:
-                    ghost_y -= (jump_count ** 2)
-                else:
-                    ghost_y += (jump_count ** 2)
-                jump_count -= 2
+        if not paused:
+            if not is_jump:
+                if keys[pygame.K_w]:
+                    is_jump = True
             else:
-                is_jump = False
-                jump_count = 8
+                if jump_count >= -8:
+                    if jump_count > 0:
+                        ghost_y -= (jump_count ** 2)
+                    else:
+                        ghost_y += (jump_count ** 2)
+                    jump_count -= 2
+                else:
+                    is_jump = False
+                    jump_count = 8
+
+
+        # Potion Bar
+        if is_potion:
+            screen.blit(heal_potion, heal_potion_bar_xy)
+        else:
+            screen.blit(heal_potion_empty, heal_potion_bar_xy)
+
+        # Shield Bar
+        if health_points == 7:
+            screen.blit(shield_bar_full, shield_bar_xy)
+            screen.blit(hp_full, hp_bar_xy)
+        if health_points == 6:
+            screen.blit(shield_bar_good, shield_bar_xy)
+            screen.blit(hp_full, hp_bar_xy)
+        if health_points == 5:
+            screen.blit(shield_bar_medium, shield_bar_xy)
+            screen.blit(hp_full, hp_bar_xy)
+        if health_points == 4:
+            screen.blit(shield_bar_low, shield_bar_xy)
+            screen.blit(hp_full, hp_bar_xy)
+
+        # Health_Point Bar
+        if health_points == 3:
+            screen.blit(hp_full, hp_bar_xy)
+            screen.blit(shield_bar_zero, shield_bar_xy)
+        if health_points == 2:
+            screen.blit(hp_medium, hp_bar_xy)
+            screen.blit(shield_bar_zero, shield_bar_xy)
+        if health_points == 1:
+            screen.blit(hp_low, hp_bar_xy)
+            screen.blit(shield_bar_zero, shield_bar_xy)
+        if health_points <= 0:
+            gameplay = False
+
+        # Knifes Bar
+        if knifes_left == 3:
+            screen.blit(knife_bar_full, knifes_bar_xy)
+        if knifes_left == 2:
+            screen.blit(knife_bar_medium, knifes_bar_xy)
+        if knifes_left == 1:
+            screen.blit(knife_bar_low, knifes_bar_xy)
+        if knifes_left == 0:
+            screen.blit(knife_bar_zero, knifes_bar_xy)
+
+
+        # Pause
+        if paused:
+            pygame.draw.rect(surface, (128, 128, 128, 150), [0, 0, window_x, window_y])
+            screen.blit(surface, (0, 0))
 
 
     else:
@@ -340,18 +365,18 @@ while running:
             knifes_left = 3
             bg_x = 0
             health_points = 7
-            potion_x -= 1500
-            potion_y -= 1500
+            potion_x -= (window_x + 300)
+            potion_y -= (window_x + 300)
 
             enemy_list.clear()
             eye_list.clear()
             knifes.clear()
 
-            screen.blit(shield_bar_full, (18, 650))
-            screen.blit(hp_full, (20, 700))
-            screen.blit(knife_bar_full, (365, 700))
-            screen.blit(heal_potion_empty, (485, 680))
-            heal_potion_hitbox = heal_potion.get_rect(topleft=(-50, -50))
+            screen.blit(shield_bar_full, shield_bar_xy)
+            screen.blit(hp_full, hp_bar_xy)
+            screen.blit(knife_bar_full, knifes_bar_xy)
+            screen.blit(heal_potion_empty, heal_potion_bar_xy)
+            heal_potion_hitbox = heal_potion.get_rect(topleft = (-50, -50))
 
             gameplay = True
             is_potion = False
@@ -368,12 +393,18 @@ while running:
             running = False
             pygame.quit()
 
-        if event.type == enemy_timer:
-            enemy_list.append(enemy.get_rect(topleft = (1290, 540)))
-        if event.type == eye_timer:
-            eye_list.append(eye_fly[0].get_rect(topleft = (1310, 440)))
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                if paused:
+                    paused = False
+                else:
+                    paused = True
 
-        if gameplay and event.type == pygame.KEYUP and event.key == pygame.K_SPACE and knifes_left > 0:
+        if event.type == enemy_timer and not paused:
+            enemy_list.append(enemy.get_rect(topleft = (window_x + 10, 540)))
+            eye_list.append(eye_fly[0].get_rect(topleft = (window_x + 30, 440)))
+
+        if gameplay and event.type == pygame.KEYUP and event.key == pygame.K_SPACE and knifes_left > 0 and not paused:
             knifes.append(knifes_anim[0].get_rect(topleft = (ghost_x + 30, ghost_y + 10)))
             knifes_left -= 1
 
